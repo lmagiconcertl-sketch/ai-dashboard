@@ -270,12 +270,15 @@
         </div>
     </main>
 
+    <!-- 모달 오버레이 -->
+    <div class="modal-overlay" id="modalOverlay"></div>
+
     <!-- 서비스 추가 모달 -->
     <div class="modal" id="serviceModal">
         <div class="modal-content">
             <div class="modal-header">
                 <h3 id="serviceModalTitle">서비스 추가</h3>
-                <button class="modal-close" onclick="closeModal('serviceModal')">&times;</button>
+                <button class="modal-close" id="closeServiceModal">&times;</button>
             </div>
             <div class="modal-body">
                 <form id="serviceForm">
@@ -304,7 +307,7 @@
                 </form>
             </div>
             <div class="form-actions">
-                <button type="button" class="btn btn-secondary" onclick="closeModal('serviceModal')">취소</button>
+                <button type="button" class="btn btn-secondary" id="cancelServiceBtn">취소</button>
                 <button type="submit" class="btn btn-primary" id="serviceSubmitBtn" form="serviceForm">추가</button>
             </div>
         </div>
@@ -315,13 +318,13 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 id="subscriptionModalTitle">구독 추가</h3>
-                <button class="modal-close" onclick="closeModal('subscriptionModal')">&times;</button>
+                <button class="modal-close" id="closeSubscriptionModal">&times;</button>
             </div>
             <div class="modal-body">
                 <form id="subscriptionForm">
                     <div class="form-group">
-                        <label for="subscriptionService">서비스명</label>
-                        <input type="text" id="subscriptionService" name="subscriptionService" required>
+                        <label for="subscriptionName">서비스명</label>
+                        <input type="text" id="subscriptionName" name="subscriptionName" required>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
@@ -344,8 +347,8 @@
                             <label for="subscriptionPeriod">결제 주기</label>
                             <select id="subscriptionPeriod" name="subscriptionPeriod" required>
                                 <option value="">선택하세요</option>
-                                <option value="1">월간</option>
-                                <option value="12">연간</option>
+                                <option value="monthly">월간</option>
+                                <option value="yearly">연간</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -356,7 +359,7 @@
                 </form>
             </div>
             <div class="form-actions">
-                <button type="button" class="btn btn-secondary" onclick="closeModal('subscriptionModal')">취소</button>
+                <button type="button" class="btn btn-secondary" id="cancelSubscriptionBtn">취소</button>
                 <button type="submit" class="btn btn-primary" id="subscriptionSubmitBtn" form="subscriptionForm">추가</button>
             </div>
         </div>
@@ -367,13 +370,14 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3>구독 수정</h3>
-                <button class="modal-close" onclick="closeModal('editSubscriptionModal')">&times;</button>
+                <button class="modal-close" id="closeEditSubscriptionModal">&times;</button>
             </div>
             <div class="modal-body">
                 <form id="editSubscriptionForm">
+                    <input type="hidden" id="editSubscriptionId">
                     <div class="form-group">
-                        <label for="editSubscriptionService">서비스명</label>
-                        <input type="text" id="editSubscriptionService" name="editSubscriptionService" required>
+                        <label for="editSubscriptionName">서비스명</label>
+                        <input type="text" id="editSubscriptionName" name="editSubscriptionName" required>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
@@ -395,8 +399,8 @@
                         <div class="form-group">
                             <label for="editSubscriptionPeriod">결제 주기</label>
                             <select id="editSubscriptionPeriod" name="editSubscriptionPeriod" required>
-                                <option value="1">월간</option>
-                                <option value="12">연간</option>
+                                <option value="monthly">월간</option>
+                                <option value="yearly">연간</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -407,7 +411,7 @@
                 </form>
             </div>
             <div class="form-actions">
-                <button type="button" class="btn btn-secondary" onclick="closeModal('editSubscriptionModal')">취소</button>
+                <button type="button" class="btn btn-secondary" id="cancelEditSubscriptionBtn">취소</button>
                 <button type="submit" class="btn btn-primary" form="editSubscriptionForm">수정</button>
             </div>
         </div>
