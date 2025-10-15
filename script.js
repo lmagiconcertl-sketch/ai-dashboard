@@ -41,18 +41,11 @@ let services = {};
 let subscriptions = [];
 let exchangeRate = 1300; // 기본 환율
 
-// DOM 요소
-const tabButtons = document.querySelectorAll('.tab-btn');
-const tabContents = document.querySelectorAll('.tab-content');
-const serviceModal = document.getElementById('serviceModal');
-const subscriptionModal = document.getElementById('subscriptionModal');
-const modalOverlay = document.getElementById('modalOverlay');
-
 // 초기화
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM Content Loaded');
     initializeApp();
     setupEventListeners();
-    addEditModalEventListeners();
     loadData();
     renderServices();
     renderSubscriptions();
@@ -61,6 +54,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // 앱 초기화
 function initializeApp() {
+    console.log('Initializing app...');
     // localStorage에서 데이터 로드, 없으면 기본 데이터 사용
     const savedServices = localStorage.getItem('aiServices');
     if (savedServices) {
@@ -78,7 +72,10 @@ function initializeApp() {
 
 // 이벤트 리스너 설정
 function setupEventListeners() {
+    console.log('Setting up event listeners...');
+    
     // 탭 전환
+    const tabButtons = document.querySelectorAll('.tab-btn');
     tabButtons.forEach(button => {
         button.addEventListener('click', () => {
             const tabName = button.dataset.tab;
@@ -87,50 +84,119 @@ function setupEventListeners() {
     });
 
     // 서비스 추가 모달
-    document.getElementById('addServiceBtn').addEventListener('click', () => {
-        openModal('service');
-    });
+    const addServiceBtn = document.getElementById('addServiceBtn');
+    if (addServiceBtn) {
+        addServiceBtn.addEventListener('click', () => {
+            openModal('service');
+        });
+    }
 
     // 구독 추가 모달
-    document.getElementById('addSubscriptionBtn').addEventListener('click', () => {
-        openModal('subscription');
-    });
+    const addSubscriptionBtn = document.getElementById('addSubscriptionBtn');
+    if (addSubscriptionBtn) {
+        addSubscriptionBtn.addEventListener('click', () => {
+            openModal('subscription');
+        });
+    }
 
-    // 모달 닫기
-    document.getElementById('closeServiceModal').addEventListener('click', () => {
-        closeModal('service');
-    });
+    // 모달 닫기 버튼들
+    const closeServiceModal = document.getElementById('closeServiceModal');
+    if (closeServiceModal) {
+        closeServiceModal.addEventListener('click', () => {
+            closeModal('service');
+        });
+    }
 
-    document.getElementById('closeSubscriptionModal').addEventListener('click', () => {
-        closeModal('subscription');
-    });
+    const closeSubscriptionModal = document.getElementById('closeSubscriptionModal');
+    if (closeSubscriptionModal) {
+        closeSubscriptionModal.addEventListener('click', () => {
+            closeModal('subscription');
+        });
+    }
 
-    document.getElementById('cancelServiceBtn').addEventListener('click', () => {
-        closeModal('service');
-    });
+    const closeEditSubscriptionModal = document.getElementById('closeEditSubscriptionModal');
+    if (closeEditSubscriptionModal) {
+        closeEditSubscriptionModal.addEventListener('click', () => {
+            closeModal('editSubscription');
+        });
+    }
 
-    document.getElementById('cancelSubscriptionBtn').addEventListener('click', () => {
-        closeModal('subscription');
-    });
+    // 취소 버튼들
+    const cancelServiceBtn = document.getElementById('cancelServiceBtn');
+    if (cancelServiceBtn) {
+        cancelServiceBtn.addEventListener('click', () => {
+            closeModal('service');
+        });
+    }
 
-    modalOverlay.addEventListener('click', () => {
-        closeModal('service');
-        closeModal('subscription');
-    });
+    const cancelSubscriptionBtn = document.getElementById('cancelSubscriptionBtn');
+    if (cancelSubscriptionBtn) {
+        cancelSubscriptionBtn.addEventListener('click', () => {
+            closeModal('subscription');
+        });
+    }
+
+    const cancelEditSubscriptionBtn = document.getElementById('cancelEditSubscriptionBtn');
+    if (cancelEditSubscriptionBtn) {
+        cancelEditSubscriptionBtn.addEventListener('click', () => {
+            closeModal('editSubscription');
+        });
+    }
+
+    // 모달 오버레이 클릭
+    const modalOverlay = document.getElementById('modalOverlay');
+    if (modalOverlay) {
+        modalOverlay.addEventListener('click', () => {
+            closeModal('service');
+            closeModal('subscription');
+            closeModal('editSubscription');
+        });
+    }
 
     // 폼 제출
-    document.getElementById('serviceForm').addEventListener('submit', handleServiceSubmit);
-    document.getElementById('subscriptionForm').addEventListener('submit', handleSubscriptionSubmit);
+    const serviceForm = document.getElementById('serviceForm');
+    if (serviceForm) {
+        serviceForm.addEventListener('submit', handleServiceSubmit);
+    }
 
-    // 환율 새로고침
-    document.getElementById('refreshRateBtn').addEventListener('click', fetchExchangeRate);
+    const subscriptionForm = document.getElementById('subscriptionForm');
+    if (subscriptionForm) {
+        subscriptionForm.addEventListener('submit', handleSubscriptionSubmit);
+    }
+
+    const editSubscriptionForm = document.getElementById('editSubscriptionForm');
+    if (editSubscriptionForm) {
+        editSubscriptionForm.addEventListener('submit', handleEditSubscriptionSubmit);
+    }
 
     // 통화 변경 시 라벨 및 심볼 업데이트
-    document.getElementById('subscriptionCurrency').addEventListener('change', function() {
-        const currency = this.value;
-        const currencySymbol = document.getElementById('currencySymbol');
-        const priceInput = document.getElementById('subscriptionPrice');
-        
+    const subscriptionCurrency = document.getElementById('subscriptionCurrency');
+    if (subscriptionCurrency) {
+        subscriptionCurrency.addEventListener('change', function() {
+            updateCurrencyDisplay(this.value, 'currencySymbol', 'subscriptionPrice');
+        });
+    }
+
+    const editSubscriptionCurrency = document.getElementById('editSubscriptionCurrency');
+    if (editSubscriptionCurrency) {
+        editSubscriptionCurrency.addEventListener('change', function() {
+            updateCurrencyDisplay(this.value, 'editCurrencySymbol', 'editSubscriptionPrice');
+        });
+    }
+
+    // 다크 모드 토글
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    if (darkModeToggle) {
+        darkModeToggle.addEventListener('click', toggleDarkMode);
+    }
+}
+
+// 통화 표시 업데이트
+function updateCurrencyDisplay(currency, symbolId, inputId) {
+    const currencySymbol = document.getElementById(symbolId);
+    const priceInput = document.getElementById(inputId);
+    
+    if (currencySymbol && priceInput) {
         if (currency === 'KRW') {
             currencySymbol.textContent = '₩';
             priceInput.step = '1';
@@ -138,12 +204,15 @@ function setupEventListeners() {
             currencySymbol.textContent = '$';
             priceInput.step = '0.01';
         }
-    });
+    }
 }
 
 // 탭 전환
 function switchTab(tabName) {
+    console.log('Switching to tab:', tabName);
+    
     // 탭 버튼 활성화
+    const tabButtons = document.querySelectorAll('.tab-btn');
     tabButtons.forEach(btn => {
         btn.classList.remove('active');
         if (btn.dataset.tab === tabName) {
@@ -152,6 +221,7 @@ function switchTab(tabName) {
     });
 
     // 탭 콘텐츠 표시
+    const tabContents = document.querySelectorAll('.tab-content');
     tabContents.forEach(content => {
         content.classList.remove('active');
         if (content.id === `${tabName}-tab`) {
@@ -162,36 +232,75 @@ function switchTab(tabName) {
 
 // 모달 열기
 function openModal(type) {
-    if (type === 'service') {
-        serviceModal.classList.add('active');
-        document.getElementById('serviceForm').reset();
-    } else if (type === 'subscription') {
-        subscriptionModal.classList.add('active');
-        document.getElementById('subscriptionForm').reset();
-        document.getElementById('currencySymbol').textContent = '$';
-    } else if (type === 'editSubscription') {
-        document.getElementById('editSubscriptionModal').classList.add('active');
+    console.log('Opening modal:', type);
+    
+    const modalOverlay = document.getElementById('modalOverlay');
+    if (modalOverlay) {
+        modalOverlay.classList.add('active');
     }
-    modalOverlay.classList.add('active');
+    
+    if (type === 'service') {
+        const serviceModal = document.getElementById('serviceModal');
+        if (serviceModal) {
+            serviceModal.classList.add('active');
+            const serviceForm = document.getElementById('serviceForm');
+            if (serviceForm) {
+                serviceForm.reset();
+            }
+        }
+    } else if (type === 'subscription') {
+        const subscriptionModal = document.getElementById('subscriptionModal');
+        if (subscriptionModal) {
+            subscriptionModal.classList.add('active');
+            const subscriptionForm = document.getElementById('subscriptionForm');
+            if (subscriptionForm) {
+                subscriptionForm.reset();
+            }
+            updateCurrencyDisplay('USD', 'currencySymbol', 'subscriptionPrice');
+        }
+    } else if (type === 'editSubscription') {
+        const editSubscriptionModal = document.getElementById('editSubscriptionModal');
+        if (editSubscriptionModal) {
+            editSubscriptionModal.classList.add('active');
+        }
+    }
+    
     document.body.style.overflow = 'hidden';
 }
 
 // 모달 닫기
 function closeModal(type) {
+    console.log('Closing modal:', type);
+    
     if (type === 'service') {
-        serviceModal.classList.remove('active');
+        const serviceModal = document.getElementById('serviceModal');
+        if (serviceModal) {
+            serviceModal.classList.remove('active');
+        }
     } else if (type === 'subscription') {
-        subscriptionModal.classList.remove('active');
+        const subscriptionModal = document.getElementById('subscriptionModal');
+        if (subscriptionModal) {
+            subscriptionModal.classList.remove('active');
+        }
     } else if (type === 'editSubscription') {
-        document.getElementById('editSubscriptionModal').classList.remove('active');
+        const editSubscriptionModal = document.getElementById('editSubscriptionModal');
+        if (editSubscriptionModal) {
+            editSubscriptionModal.classList.remove('active');
+        }
     }
-    modalOverlay.classList.remove('active');
+    
+    const modalOverlay = document.getElementById('modalOverlay');
+    if (modalOverlay) {
+        modalOverlay.classList.remove('active');
+    }
+    
     document.body.style.overflow = 'auto';
 }
 
 // 서비스 폼 제출 처리
 function handleServiceSubmit(e) {
     e.preventDefault();
+    console.log('Handling service submit');
     
     const name = document.getElementById('serviceName').value.trim();
     const url = document.getElementById('serviceUrl').value.trim();
@@ -227,6 +336,7 @@ function handleServiceSubmit(e) {
 // 구독 폼 제출 처리
 function handleSubscriptionSubmit(e) {
     e.preventDefault();
+    console.log('Handling subscription submit');
     
     const name = document.getElementById('subscriptionName').value.trim();
     const price = parseFloat(document.getElementById('subscriptionPrice').value);
@@ -260,16 +370,54 @@ function handleSubscriptionSubmit(e) {
     updateStats();
     closeModal('subscription');
 
-    // 폼 초기화
-    document.getElementById('subscriptionForm').reset();
-    document.getElementById('currencySymbol').textContent = '$';
-
     // 성공 메시지
     showNotification(`${name} 구독이 추가되었습니다.`);
 }
 
+// 구독 수정 폼 제출 처리
+function handleEditSubscriptionSubmit(e) {
+    e.preventDefault();
+    console.log('Handling edit subscription submit');
+    
+    const index = parseInt(document.getElementById('editSubscriptionId').value);
+    const name = document.getElementById('editSubscriptionName').value.trim();
+    const price = parseFloat(document.getElementById('editSubscriptionPrice').value);
+    const period = document.getElementById('editSubscriptionPeriod').value;
+    const currency = document.getElementById('editSubscriptionCurrency').value;
+    const startDate = document.getElementById('editSubscriptionStartDate').value;
+
+    if (!name || !price || !period || !currency || !startDate) {
+        alert('모든 필드를 입력해주세요.');
+        return;
+    }
+
+    if (price <= 0) {
+        alert('구독료는 0보다 큰 값을 입력해주세요.');
+        return;
+    }
+
+    // 구독 수정
+    subscriptions[index] = {
+        ...subscriptions[index],
+        name,
+        price,
+        period,
+        currency,
+        startDate
+    };
+
+    saveSubscriptions();
+    renderSubscriptions();
+    updateStats();
+    closeModal('editSubscription');
+
+    // 성공 메시지
+    showNotification(`${name} 구독이 수정되었습니다.`);
+}
+
 // 서비스 렌더링
 function renderServices() {
+    console.log('Rendering services');
     const categories = ['agent', 'image', 'video', 'tts', 'music', 'editing'];
     const categoryIds = ['agent-services', 'image-services', 'video-services', 'tts-services', 'music-services', 'editing-services'];
 
@@ -328,10 +476,8 @@ function createServiceCard(service, category, index) {
 function getFaviconUrl(url) {
     try {
         const domain = new URL(url).hostname;
-        // Google의 파비콘 서비스 사용 (무료)
         return `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
     } catch (e) {
-        // URL 파싱 실패 시 기본 아이콘 반환
         return 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%234f46e5"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>';
     }
 }
@@ -348,7 +494,8 @@ function deleteService(category, index) {
 
 // 구독 렌더링
 function renderSubscriptions() {
-    const tbody = document.getElementById('subscriptions-tbody');
+    console.log('Rendering subscriptions');
+    const tbody = document.getElementById('subscriptionTableBody');
     if (!tbody) return;
 
     tbody.innerHTML = '';
@@ -356,7 +503,7 @@ function renderSubscriptions() {
     if (subscriptions.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="6" style="text-align: center; padding: 2rem; color: #6b7280;">
+                <td colspan="10" style="text-align: center; padding: 2rem; color: #6b7280;">
                     등록된 구독이 없습니다.
                 </td>
             </tr>
@@ -377,21 +524,28 @@ function createSubscriptionRow(subscription, index) {
     const row = document.createElement('tr');
     
     // 통화별 처리
-    const currency = subscription.currency || 'USD'; // 기존 데이터 호환성
-    let usdPrice, krwPrice;
+    const currency = subscription.currency || 'USD';
+    let usdPrice, krwPrice, monthlyUsd, monthlyKrw;
     
     if (currency === 'KRW') {
-        // 원화인 경우
         usdPrice = (subscription.price / exchangeRate).toFixed(2);
         krwPrice = subscription.price.toLocaleString();
     } else {
-        // 달러인 경우
         usdPrice = subscription.price.toFixed(2);
         krwPrice = (subscription.price * exchangeRate).toLocaleString();
     }
 
+    // 월간 환산
+    if (subscription.period === 'monthly') {
+        monthlyUsd = usdPrice;
+        monthlyKrw = krwPrice;
+    } else {
+        monthlyUsd = (parseFloat(usdPrice) / 12).toFixed(2);
+        monthlyKrw = Math.round(parseInt(krwPrice.replace(/,/g, '')) / 12).toLocaleString();
+    }
+
     // 갱신일 처리
-    const startDate = subscription.startDate || subscription.renewalDate || '';
+    const startDate = subscription.startDate || '';
     const nextRenewalDate = calculateNextRenewalDate(startDate, subscription.period);
     const renewalStatus = getRenewalStatus(nextRenewalDate);
     const startDateFormatted = startDate ? new Date(startDate).toLocaleDateString('ko-KR') : '-';
@@ -402,6 +556,8 @@ function createSubscriptionRow(subscription, index) {
         <td>$${usdPrice}</td>
         <td>₩${krwPrice}</td>
         <td>${subscription.period === 'monthly' ? '월간' : '연간'}</td>
+        <td>$${monthlyUsd}</td>
+        <td>₩${monthlyKrw}</td>
         <td>${startDateFormatted}</td>
         <td class="renewal-date ${renewalStatus.class}">${nextRenewalDateFormatted}</td>
         <td><span class="subscription-status ${renewalStatus.statusClass}">${renewalStatus.text}</span></td>
@@ -420,6 +576,26 @@ function createSubscriptionRow(subscription, index) {
     return row;
 }
 
+// 구독 수정
+function editSubscription(index) {
+    console.log('Editing subscription:', index);
+    const subscription = subscriptions[index];
+    
+    // 수정 모달에 기존 데이터 채우기
+    document.getElementById('editSubscriptionId').value = index;
+    document.getElementById('editSubscriptionName').value = subscription.name;
+    document.getElementById('editSubscriptionCurrency').value = subscription.currency || 'USD';
+    document.getElementById('editSubscriptionPrice').value = subscription.price;
+    document.getElementById('editSubscriptionPeriod').value = subscription.period;
+    document.getElementById('editSubscriptionStartDate').value = subscription.startDate || '';
+    
+    // 통화 심볼 업데이트
+    const currency = subscription.currency || 'USD';
+    updateCurrencyDisplay(currency, 'editCurrencySymbol', 'editSubscriptionPrice');
+    
+    openModal('editSubscription');
+}
+
 // 구독 삭제
 function deleteSubscription(index) {
     if (confirm('이 구독을 삭제하시겠습니까?')) {
@@ -432,6 +608,7 @@ function deleteSubscription(index) {
 
 // 통계 업데이트
 function updateStats() {
+    console.log('Updating stats');
     let monthlyTotalUSD = 0;
     let yearlyTotalUSD = 0;
     let monthlyTotalKRW = 0;
@@ -441,7 +618,6 @@ function updateStats() {
         const currency = subscription.currency || 'USD';
         
         if (currency === 'KRW') {
-            // 원화 구독
             if (subscription.period === 'monthly') {
                 monthlyTotalKRW += subscription.price;
                 yearlyTotalKRW += subscription.price * 12;
@@ -454,7 +630,6 @@ function updateStats() {
                 yearlyTotalUSD += subscription.price / exchangeRate;
             }
         } else {
-            // 달러 구독
             if (subscription.period === 'monthly') {
                 monthlyTotalUSD += subscription.price;
                 yearlyTotalUSD += subscription.price * 12;
@@ -469,58 +644,130 @@ function updateStats() {
         }
     });
 
-    // USD 표시
-    document.getElementById('monthly-usd').textContent = `$${monthlyTotalUSD.toFixed(2)}`;
-    document.getElementById('yearly-usd').textContent = `$${yearlyTotalUSD.toFixed(2)}`;
+    // 통계 표시 업데이트
+    const totalUsdMonth = document.getElementById('totalUsdMonth');
+    const totalKrwMonth = document.getElementById('totalKrwMonth');
+    const totalUsdYear = document.getElementById('totalUsdYear');
+    const exchangeRateElement = document.getElementById('exchangeRate');
 
-    // KRW 표시
-    document.getElementById('monthly-krw').textContent = `₩${monthlyTotalKRW.toLocaleString()}`;
-    document.getElementById('yearly-krw').textContent = `₩${yearlyTotalKRW.toLocaleString()}`;
+    if (totalUsdMonth) totalUsdMonth.textContent = `$${monthlyTotalUSD.toFixed(2)}`;
+    if (totalKrwMonth) totalKrwMonth.textContent = `₩${monthlyTotalKRW.toLocaleString()}`;
+    if (totalUsdYear) totalUsdYear.textContent = `$${yearlyTotalUSD.toFixed(2)}`;
+    if (exchangeRateElement) exchangeRateElement.textContent = `₩${exchangeRate.toFixed(2)}`;
 }
 
 // 환율 가져오기
 async function fetchExchangeRate() {
+    console.log('Fetching exchange rate');
     try {
-        document.getElementById('current-rate').textContent = '로딩 중...';
-        document.getElementById('rate-updated').textContent = '업데이트: 로딩 중...';
-
-        // 무료 환율 API 사용
         const response = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
         const data = await response.json();
         
         if (data.rates && data.rates.KRW) {
             exchangeRate = data.rates.KRW;
-            document.getElementById('current-rate').textContent = exchangeRate.toFixed(2);
-            
-            const updateTime = new Date().toLocaleString('ko-KR');
-            document.getElementById('rate-updated').textContent = `업데이트: ${updateTime}`;
-            
-            // 환율이 업데이트되면 구독 정보도 다시 렌더링
-            renderSubscriptions();
-            
-            // 환율 정보 저장
             localStorage.setItem('exchangeRate', exchangeRate);
-            localStorage.setItem('exchangeRateUpdated', updateTime);
+            localStorage.setItem('exchangeRateUpdated', new Date().toISOString());
+            
+            renderSubscriptions();
+            showNotification('환율이 업데이트되었습니다.');
         } else {
             throw new Error('환율 데이터를 가져올 수 없습니다.');
         }
     } catch (error) {
         console.error('환율 가져오기 실패:', error);
         
-        // 저장된 환율 정보 사용
         const savedRate = localStorage.getItem('exchangeRate');
-        const savedTime = localStorage.getItem('exchangeRateUpdated');
-        
         if (savedRate) {
             exchangeRate = parseFloat(savedRate);
-            document.getElementById('current-rate').textContent = exchangeRate.toFixed(2);
-            document.getElementById('rate-updated').textContent = `업데이트: ${savedTime || '알 수 없음'}`;
-        } else {
-            document.getElementById('current-rate').textContent = '1300.00 (기본값)';
-            document.getElementById('rate-updated').textContent = '업데이트: 실패';
         }
         
         showNotification('환율 정보를 가져오는데 실패했습니다. 기본값을 사용합니다.', 'error');
+    }
+}
+
+// 다음 갱신일 계산
+function calculateNextRenewalDate(startDate, period) {
+    if (!startDate) return null;
+    
+    const start = new Date(startDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    start.setHours(0, 0, 0, 0);
+    
+    if (period === 'monthly') {
+        let nextRenewal = new Date(start);
+        nextRenewal.setMonth(nextRenewal.getMonth() + 1);
+        
+        while (nextRenewal <= today) {
+            nextRenewal.setMonth(nextRenewal.getMonth() + 1);
+        }
+        
+        return nextRenewal.toISOString().split('T')[0];
+    } else if (period === 'yearly') {
+        let nextRenewal = new Date(start);
+        nextRenewal.setFullYear(nextRenewal.getFullYear() + 1);
+        
+        while (nextRenewal <= today) {
+            nextRenewal.setFullYear(nextRenewal.getFullYear() + 1);
+        }
+        
+        return nextRenewal.toISOString().split('T')[0];
+    }
+    
+    return null;
+}
+
+// 갱신 상태 확인
+function getRenewalStatus(renewalDate) {
+    if (!renewalDate) {
+        return {
+            class: '',
+            statusClass: 'status-active',
+            text: '활성'
+        };
+    }
+
+    const today = new Date();
+    const renewal = new Date(renewalDate);
+    const diffTime = renewal - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) {
+        return {
+            class: 'expired',
+            statusClass: 'status-expired',
+            text: '만료'
+        };
+    } else if (diffDays <= 7) {
+        return {
+            class: 'warning',
+            statusClass: 'status-warning',
+            text: `${diffDays}일 후 갱신`
+        };
+    } else if (diffDays <= 30) {
+        return {
+            class: '',
+            statusClass: 'status-active',
+            text: `${diffDays}일 후 갱신`
+        };
+    } else {
+        return {
+            class: '',
+            statusClass: 'status-active',
+            text: '활성'
+        };
+    }
+}
+
+// 다크 모드 토글
+function toggleDarkMode() {
+    document.body.classList.toggle('dark-mode');
+    const isDarkMode = document.body.classList.contains('dark-mode');
+    localStorage.setItem('darkMode', isDarkMode);
+    
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    if (darkModeToggle) {
+        darkModeToggle.innerHTML = isDarkMode ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
     }
 }
 
@@ -534,19 +781,28 @@ function saveSubscriptions() {
 }
 
 function loadData() {
+    console.log('Loading data');
+    // 다크 모드 설정 로드
+    const isDarkMode = localStorage.getItem('darkMode') === 'true';
+    if (isDarkMode) {
+        document.body.classList.add('dark-mode');
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        if (darkModeToggle) {
+            darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+        }
+    }
+    
     // 환율 정보 로드
     const savedRate = localStorage.getItem('exchangeRate');
-    const savedTime = localStorage.getItem('exchangeRateUpdated');
-    
     if (savedRate) {
         exchangeRate = parseFloat(savedRate);
-        document.getElementById('current-rate').textContent = exchangeRate.toFixed(2);
-        document.getElementById('rate-updated').textContent = `업데이트: ${savedTime || '알 수 없음'}`;
     }
 }
 
 // 알림 표시
 function showNotification(message, type = 'success') {
+    console.log('Showing notification:', message, type);
+    
     // 기존 알림 제거
     const existingNotification = document.querySelector('.notification');
     if (existingNotification) {
@@ -608,6 +864,7 @@ document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
         closeModal('service');
         closeModal('subscription');
+        closeModal('editSubscription');
     }
     
     // Ctrl/Cmd + N으로 서비스 추가
@@ -623,490 +880,4 @@ document.addEventListener('keydown', function(e) {
     }
 });
 
-
-// 추가 UI 개선 기능들
-
-// 검색 기능 추가
-function addSearchFunctionality() {
-    // 검색 입력 필드 생성
-    const searchContainer = document.createElement('div');
-    searchContainer.className = 'search-container';
-    searchContainer.style.cssText = `
-        margin-bottom: 2rem;
-        text-align: center;
-    `;
-    
-    const searchInput = document.createElement('input');
-    searchInput.type = 'text';
-    searchInput.placeholder = 'AI 서비스 검색...';
-    searchInput.className = 'search-input';
-    searchInput.style.cssText = `
-        width: 100%;
-        max-width: 400px;
-        padding: 1rem;
-        border: 2px solid rgba(255, 255, 255, 0.3);
-        border-radius: 25px;
-        background: rgba(255, 255, 255, 0.9);
-        font-size: 1rem;
-        text-align: center;
-        transition: all 0.3s ease;
-    `;
-    
-    searchInput.addEventListener('focus', () => {
-        searchInput.style.borderColor = '#4f46e5';
-        searchInput.style.boxShadow = '0 0 0 3px rgba(79, 70, 229, 0.1)';
-    });
-    
-    searchInput.addEventListener('blur', () => {
-        searchInput.style.borderColor = 'rgba(255, 255, 255, 0.3)';
-        searchInput.style.boxShadow = 'none';
-    });
-    
-    searchInput.addEventListener('input', (e) => {
-        filterServices(e.target.value);
-    });
-    
-    searchContainer.appendChild(searchInput);
-    
-    // 서비스 탭의 섹션 헤더 다음에 검색 컨테이너 추가
-    const servicesTab = document.getElementById('services-tab');
-    const sectionHeader = servicesTab.querySelector('.section-header');
-    sectionHeader.after(searchContainer);
-}
-
-// 서비스 필터링
-function filterServices(searchTerm) {
-    const categories = ['agent', 'image', 'video', 'tts', 'music', 'editing'];
-    const categoryContainers = categories.map(cat => 
-        document.querySelector(`.service-category:has(#${cat}-services)`)
-    );
-    
-    if (!searchTerm.trim()) {
-        // 검색어가 없으면 모든 카테고리 표시
-        categoryContainers.forEach(container => {
-            if (container) container.style.display = 'block';
-        });
-        renderServices();
-        return;
-    }
-    
-    const searchLower = searchTerm.toLowerCase();
-    
-    categories.forEach((category, index) => {
-        const container = categoryContainers[index];
-        if (!container) return;
-        
-        const categoryServices = services[category] || [];
-        const matchingServices = categoryServices.filter(service => 
-            service.name.toLowerCase().includes(searchLower)
-        );
-        
-        if (matchingServices.length > 0) {
-            container.style.display = 'block';
-            const serviceGrid = container.querySelector(`#${category}-services`);
-            serviceGrid.innerHTML = '';
-            
-            matchingServices.forEach((service, serviceIndex) => {
-                const originalIndex = categoryServices.indexOf(service);
-                const serviceCard = createServiceCard(service, category, originalIndex);
-                serviceGrid.appendChild(serviceCard);
-            });
-        } else {
-            container.style.display = 'none';
-        }
-    });
-}
-
-// 다크 모드 토글 기능
-function addDarkModeToggle() {
-    const darkModeBtn = document.createElement('button');
-    darkModeBtn.className = 'btn btn-outline dark-mode-toggle';
-    darkModeBtn.innerHTML = '<i class="fas fa-moon"></i>';
-    darkModeBtn.style.cssText = `
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        z-index: 1000;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0;
-    `;
-    
-    darkModeBtn.addEventListener('click', toggleDarkMode);
-    document.body.appendChild(darkModeBtn);
-    
-    // 저장된 다크 모드 설정 로드
-    const isDarkMode = localStorage.getItem('darkMode') === 'true';
-    if (isDarkMode) {
-        enableDarkMode();
-    }
-}
-
-function toggleDarkMode() {
-    const isDarkMode = document.body.classList.contains('dark-mode');
-    if (isDarkMode) {
-        disableDarkMode();
-    } else {
-        enableDarkMode();
-    }
-}
-
-function enableDarkMode() {
-    document.body.classList.add('dark-mode');
-    localStorage.setItem('darkMode', 'true');
-    
-    const darkModeBtn = document.querySelector('.dark-mode-toggle');
-    if (darkModeBtn) {
-        darkModeBtn.innerHTML = '<i class="fas fa-sun"></i>';
-    }
-    
-    // 다크 모드 스타일 추가
-    if (!document.querySelector('#dark-mode-styles')) {
-        const darkStyles = document.createElement('style');
-        darkStyles.id = 'dark-mode-styles';
-        darkStyles.textContent = `
-            .dark-mode {
-                background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%) !important;
-            }
-            .dark-mode .header {
-                background: rgba(0, 0, 0, 0.8) !important;
-            }
-            .dark-mode .nav-tabs {
-                background: rgba(0, 0, 0, 0.7) !important;
-            }
-            .dark-mode .service-card,
-            .dark-mode .exchange-rate-card,
-            .dark-mode .stat-card,
-            .dark-mode .subscription-list {
-                background: rgba(0, 0, 0, 0.8) !important;
-                color: white !important;
-            }
-            .dark-mode .service-card h4,
-            .dark-mode .stat-content h3,
-            .dark-mode .list-header h3 {
-                color: white !important;
-            }
-            .dark-mode th {
-                background: rgba(0, 0, 0, 0.5) !important;
-                color: white !important;
-            }
-            .dark-mode td {
-                color: #d1d5db !important;
-            }
-        `;
-        document.head.appendChild(darkStyles);
-    }
-}
-
-function disableDarkMode() {
-    document.body.classList.remove('dark-mode');
-    localStorage.setItem('darkMode', 'false');
-    
-    const darkModeBtn = document.querySelector('.dark-mode-toggle');
-    if (darkModeBtn) {
-        darkModeBtn.innerHTML = '<i class="fas fa-moon"></i>';
-    }
-}
-
-// 데이터 내보내기/가져오기 기능
-function addDataManagement() {
-    const dataManagementContainer = document.createElement('div');
-    dataManagementContainer.className = 'data-management';
-    dataManagementContainer.style.cssText = `
-        position: fixed;
-        bottom: 80px;
-        right: 20px;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        z-index: 1000;
-    `;
-    
-    // 데이터 내보내기 버튼
-    const exportBtn = document.createElement('button');
-    exportBtn.className = 'btn btn-secondary';
-    exportBtn.innerHTML = '<i class="fas fa-download"></i>';
-    exportBtn.title = '데이터 내보내기';
-    exportBtn.style.cssText = `
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0;
-    `;
-    exportBtn.addEventListener('click', exportData);
-    
-    // 데이터 가져오기 버튼
-    const importBtn = document.createElement('button');
-    importBtn.className = 'btn btn-secondary';
-    importBtn.innerHTML = '<i class="fas fa-upload"></i>';
-    importBtn.title = '데이터 가져오기';
-    importBtn.style.cssText = `
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0;
-    `;
-    importBtn.addEventListener('click', () => {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = '.json';
-        input.addEventListener('change', importData);
-        input.click();
-    });
-    
-    dataManagementContainer.appendChild(exportBtn);
-    dataManagementContainer.appendChild(importBtn);
-    document.body.appendChild(dataManagementContainer);
-}
-
-function exportData() {
-    const data = {
-        services: services,
-        subscriptions: subscriptions,
-        exportDate: new Date().toISOString()
-    };
-    
-    const dataStr = JSON.stringify(data, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(dataBlob);
-    link.download = `ai-dashboard-backup-${new Date().toISOString().split('T')[0]}.json`;
-    link.click();
-    
-    showNotification('데이터가 성공적으로 내보내졌습니다.');
-}
-
-function importData(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const data = JSON.parse(e.target.result);
-            
-            if (data.services && data.subscriptions) {
-                if (confirm('기존 데이터를 덮어쓰시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
-                    services = data.services;
-                    subscriptions = data.subscriptions;
-                    
-                    saveServices();
-                    saveSubscriptions();
-                    
-                    renderServices();
-                    renderSubscriptions();
-                    
-                    showNotification('데이터가 성공적으로 가져와졌습니다.');
-                }
-            } else {
-                throw new Error('올바르지 않은 데이터 형식입니다.');
-            }
-        } catch (error) {
-            showNotification('데이터 가져오기에 실패했습니다: ' + error.message, 'error');
-        }
-    };
-    reader.readAsText(file);
-}
-
-// 통계 차트 추가 (간단한 도넛 차트)
-        }
-    }, 100);
-}
-
-// 기존 초기화에 향상된 기능 추가
-document.addEventListener('DOMContentLoaded', function() {
-    initializeApp();
-    setupEventListeners();
-    loadData();
-    renderServices();
-    renderSubscriptions();
-    fetchExchangeRate();
-    enhancedInitialization();
-});
-
-// 갱신 상태 확인
-// 다음 갱신일 계산
-function calculateNextRenewalDate(startDate, period) {
-    if (!startDate) return null;
-    
-    const start = new Date(startDate);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // 시간을 00:00:00으로 설정
-    start.setHours(0, 0, 0, 0); // 시간을 00:00:00으로 설정
-    
-    if (period === 'monthly') {
-        // 월간 구독: 시작일로부터 다음 월
-        let nextRenewal = new Date(start);
-        nextRenewal.setMonth(nextRenewal.getMonth() + 1);
-        
-        // 만약 계산된 날짜가 오늘보다 이전이면 계속 월을 추가
-        while (nextRenewal <= today) {
-            nextRenewal.setMonth(nextRenewal.getMonth() + 1);
-        }
-        
-        return nextRenewal.toISOString().split('T')[0];
-    } else if (period === 'yearly') {
-        // 연간 구독: 시작일로부터 다음 년
-        let nextRenewal = new Date(start);
-        nextRenewal.setFullYear(nextRenewal.getFullYear() + 1);
-        
-        // 만약 계산된 날짜가 오늘보다 이전이면 계속 년을 추가
-        while (nextRenewal <= today) {
-            nextRenewal.setFullYear(nextRenewal.getFullYear() + 1);
-        }
-        
-        return nextRenewal.toISOString().split('T')[0];
-    }
-    
-    return null;
-}
-
-function getRenewalStatus(renewalDate) {
-    if (!renewalDate) {
-        return {
-            class: '',
-            statusClass: 'status-active',
-            text: '활성'
-        };
-    }
-
-    const today = new Date();
-    const renewal = new Date(renewalDate);
-    const diffTime = renewal - today;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays < 0) {
-        return {
-            class: 'expired',
-            statusClass: 'status-expired',
-            text: '만료'
-        };
-    } else if (diffDays <= 7) {
-        return {
-            class: 'warning',
-            statusClass: 'status-warning',
-            text: `${diffDays}일 후 갱신`
-        };
-    } else if (diffDays <= 30) {
-        return {
-            class: '',
-            statusClass: 'status-active',
-            text: `${diffDays}일 후 갱신`
-        };
-    } else {
-        return {
-            class: '',
-            statusClass: 'status-active',
-            text: '활성'
-        };
-    }
-}
-
-// 구독 수정
-function editSubscription(index) {
-    const subscription = subscriptions[index];
-    
-    // 수정 모달에 기존 데이터 채우기
-    document.getElementById('editSubscriptionId').value = index;
-    document.getElementById('editSubscriptionName').value = subscription.name;
-    document.getElementById('editSubscriptionCurrency').value = subscription.currency || 'USD';
-    document.getElementById('editSubscriptionPrice').value = subscription.price;
-    document.getElementById('editSubscriptionPeriod').value = subscription.period;
-    document.getElementById('editSubscriptionStartDate').value = subscription.startDate || subscription.renewalDate || '';
-    
-    // 통화 심볼 업데이트
-    const currency = subscription.currency || 'USD';
-    const editCurrencySymbol = document.getElementById('editCurrencySymbol');
-    const editPriceInput = document.getElementById('editSubscriptionPrice');
-    
-    if (currency === 'KRW') {
-        editCurrencySymbol.textContent = '₩';
-        editPriceInput.step = '1';
-    } else {
-        editCurrencySymbol.textContent = '$';
-        editPriceInput.step = '0.01';
-    }
-    
-    openModal('editSubscription');
-}
-
-// 구독 수정 폼 제출 처리
-function handleEditSubscriptionSubmit(e) {
-    e.preventDefault();
-    
-    const index = parseInt(document.getElementById('editSubscriptionId').value);
-    const name = document.getElementById('editSubscriptionName').value.trim();
-    const price = parseFloat(document.getElementById('editSubscriptionPrice').value);
-    const period = document.getElementById('editSubscriptionPeriod').value;
-    const currency = document.getElementById('editSubscriptionCurrency').value;
-    const startDate = document.getElementById('editSubscriptionStartDate').value;
-
-    if (!name || !price || !period || !currency || !startDate) {
-        alert('모든 필드를 입력해주세요.');
-        return;
-    }
-
-    if (price <= 0) {
-        alert('구독료는 0보다 큰 값을 입력해주세요.');
-        return;
-    }
-
-    // 구독 수정
-    subscriptions[index] = {
-        ...subscriptions[index],
-        name,
-        price,
-        period,
-        currency,
-        startDate
-    };
-
-    saveSubscriptions();
-    renderSubscriptions();
-    updateStats();
-    closeModal('editSubscription');
-
-    // 성공 메시지
-    showNotification(`${name} 구독이 수정되었습니다.`);
-}
-
-// 수정 모달 관련 이벤트 리스너 추가
-function addEditModalEventListeners() {
-    // 수정 모달 닫기
-    document.getElementById('closeEditSubscriptionModal').addEventListener('click', () => {
-        closeModal('editSubscription');
-    });
-
-    document.getElementById('cancelEditSubscriptionBtn').addEventListener('click', () => {
-        closeModal('editSubscription');
-    });
-
-    // 수정 폼 제출
-    document.getElementById('editSubscriptionForm').addEventListener('submit', handleEditSubscriptionSubmit);
-
-    // 수정 모달 통화 변경 시 심볼 업데이트
-    document.getElementById('editSubscriptionCurrency').addEventListener('change', function() {
-        const currency = this.value;
-        const editCurrencySymbol = document.getElementById('editCurrencySymbol');
-        const editPriceInput = document.getElementById('editSubscriptionPrice');
-        
-        if (currency === 'KRW') {
-            editCurrencySymbol.textContent = '₩';
-            editPriceInput.step = '1';
-        } else {
-            editCurrencySymbol.textContent = '$';
-            editPriceInput.step = '0.01';
-        }
-    });
-}
+console.log('Script loaded successfully');
